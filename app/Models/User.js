@@ -21,6 +21,14 @@ class User extends Model {
 		})
 	}
 
+	/*
+	Oculta campos no retorno de consultas
+	*/
+	static get hidden() {
+		return [ 'password' ]
+	}
+
+	// adiciona comportamentp no model (com arquivos externos)
 	static get traits () {
 		return [
 			'@provider:Adonis/Acl/HasRole',
@@ -41,6 +49,15 @@ class User extends Model {
 	tokens () {
 		return this.hasMany('App/Models/Token')
 	}
+
+	image() {
+		return this.belongsTo('App/Models/Image')
+	}
+
+	coupons() {
+		return this.belongsToMany('App/Models/Coupon')
+	}
+
 }
 
 module.exports = User
