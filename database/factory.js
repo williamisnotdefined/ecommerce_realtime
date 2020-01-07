@@ -26,7 +26,7 @@ Factory.blueprint('App/Models/Category', faker => ({
 }))
 
 Factory.blueprint('App/Models/Product', faker => ({
-	title: faker.country({ full: true }),
+	name: faker.country({ full: true }),
 	description: faker.sentence(),
 	price: faker.floating({ min: 10, max: 1500, fixed: 2 })
 }))
