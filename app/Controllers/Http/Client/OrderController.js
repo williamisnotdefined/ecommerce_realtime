@@ -1,0 +1,31 @@
+'use strict'
+
+/** @typedef {import('@adonisjs/framework/src/Request')} Request */
+/** @typedef {import('@adonisjs/framework/src/Response')} Response */
+/** @typedef {import('@adonisjs/framework/src/View')} View */
+
+/**
+* Resourceful controller for interacting with orders
+*/
+class OrderController {
+
+
+    async index ({ request, response, view }) {
+    }
+
+
+    async store ({ request, response }) {
+    }
+
+
+    async show ({ params, request, response, view }) {
+    }
+
+
+    async edit ({ params, request, response, view }) {
+    }
+
+
+}
+
+module.exports = OrderController
