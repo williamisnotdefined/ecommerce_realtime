@@ -6,12 +6,12 @@ const Role = use('Role')
 
 class AuthController {
 
-	async register({ req, res }) {
+	async register({ request, response }) {
 
 		const trx = await Database.beginTransaction()
 
 		try {
-			const { name, email, password } = req.all()
+			const { name, email, password } = request.all()
 
 			const user = await User.create({ name, email, password }, trx)
 			const userRole = await Role.findBy('slug', 'client')
@@ -25,7 +25,7 @@ class AuthController {
 
 			await trx.commit()
 
-			return res.status(201).send({
+			return response.status(201).send({
 				data: user
 			})
 
@@ -33,7 +33,7 @@ class AuthController {
 
 			await trx.rollback()
 
-			return res.status(400).send({
+			return response.status(400).send({
 				message: 'Cannot create user'
 			})
 
@@ -41,27 +41,32 @@ class AuthController {
 
 	}
 
-	async login({ req, res, auth }) {
+	async login({ request, response, auth }) {
+		const { email, password } = request.all()
+
+		const data = await auth.withRefreshToken().attempt(email, password)
+
+		return response.send({ data })
 
 	}
 
-	async refresh({ req, res, auth }) {
+	async refresh({ request, response, auth }) {
 
 	}
 
-	async logout({ req, res, auth }) {
+	async logout({ request, response, auth }) {
 
 	}
 
-	async forgot({ req, res }) {
+	async forgot({ request, response }) {
 
 	}
 
-	async remember({ req, res }) {
+	async remember({ request, response }) {
 
 	}
 
-	async reset({ req, res }) {
+	async reset({ request, response }) {
 
 	}
 
