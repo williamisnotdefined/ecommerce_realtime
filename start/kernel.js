@@ -15,7 +15,8 @@ const Server = use('Server')
 const globalMiddleware = [
 	'Adonis/Middleware/BodyParser',
 	'App/Middleware/ConvertEmptyStringsToNull',
-	'Adonis/Acl/Init'
+	'Adonis/Acl/Init',
+	'App/Middleware/Pagination'
 ]
 
 /*
@@ -39,7 +40,7 @@ const namedMiddleware = {
 	auth: 'Adonis/Middleware/Auth',
 	guest: 'Adonis/Middleware/AllowGuestOnly',
 	is: 'Adonis/Acl/Is',
-	can: 'Adonis/Acl/Can',
+	can: 'Adonis/Acl/Can'
 }
 
 /*
