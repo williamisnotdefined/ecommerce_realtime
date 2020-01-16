@@ -51,11 +51,36 @@ class AuthController {
 	}
 
 	async refresh({ request, response, auth }) {
+		let refreshToken = request.input('refresh_token'); // caso venha no body
+
+		if (!refreshToken) {
+			// se não foi passado no body da requisição, tentamos pegar do header da request
+			refreshToken = request.header('refresh_token')
+		}
+
+		// tem que validar se realmente veio refresh_token de algum lugar
+		const user = await auth.newRefreshToken().generateForRefreshToken(refreshToken)
+
+		return response.send({
+			data: user
+		})
 
 	}
 
 	async logout({ request, response, auth }) {
+		let refreshToken = request.input('refresh_token'); // caso venha no body
 
+		if (!refreshToken) {
+			// se não foi passado no body da requisição, tentamos pegar do header da request
+			refreshToken = request.header('refresh_token')
+		}
+
+		// tem que validar se realmente veio refresh_token de algum lugar
+
+		// o parametro "true" de revokeTokens é para deletar o token do banco de dados.
+		await auth.authenticator('jwt').revokeTokens([refreshToken], true)
+
+		return response.status(204).send()
 	}
 
 	async forgot({ request, response }) {
