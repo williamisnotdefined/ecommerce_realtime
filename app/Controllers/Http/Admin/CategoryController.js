@@ -13,7 +13,7 @@ const Category = use('App/Models/Category')
 class CategoryController {
 
 
-    async index ({ request, response, view, pagination }) {
+    async index ({ request, response, pagination }) {
 
         const title = request.input('title')
 
@@ -55,7 +55,7 @@ class CategoryController {
     }
 
 
-    async show ({ params: { id }, request, response, view }) {
+    async show ({ params: { id }, response }) {
         // findOrFail -> retorna 404 para o user
         // necessário criar try catch
         const category = await Category.findOrFail(id)
@@ -76,7 +76,7 @@ class CategoryController {
     }
 
 
-    async destroy ({ params: { id }, request, response }) {
+    async destroy ({ params: { id }, response }) {
         // necessário criar try catch para o findOrFail
         const category = await Category.findOrFail(id)
         category.delete()
