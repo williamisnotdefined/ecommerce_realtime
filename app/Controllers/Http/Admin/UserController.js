@@ -89,7 +89,7 @@ class UserController {
 
         try {
             await user.delete()
-            return response.status(204)
+            return response.status(204).send()
         } catch (error) {
             return response.status(500).send({
                 message: "Não foi possível atualizar o usuário"
