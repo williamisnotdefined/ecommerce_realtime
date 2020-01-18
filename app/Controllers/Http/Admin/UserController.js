@@ -24,7 +24,7 @@ class UserController {
         }
 
         try {
-            const users = userQuery.paginate(pagination.page, pagination.limit)
+            const users = await userQuery.paginate(pagination.page, pagination.limit)
             return response.send({
                 users
             })
@@ -38,7 +38,8 @@ class UserController {
 
 
     async store ({ request, response }) {
-        const userData = request.only([ 'name', 'email', 'password' ])
+
+        const userData = request.only([ 'name', 'email', 'password', 'image_id' ])
 
         try {
             const user = await User.create(userData)
@@ -55,16 +56,45 @@ class UserController {
 
 
     async show ({ params: { id }, request, response, view }) {
+
         const user = await User.findOrFail(id)
+
         return response.send(user)
+
     }
 
 
-    async update ({ params, request, response }) {
+    async update ({ params: { id }, request, response }) {
+
+        const user = await User.findOrFail(id)
+        // atualizar o email facil assim?
+        const userData = request.only([ 'name', 'email', 'password', 'image_id' ])
+
+        user.merge(userData)
+
+        try {
+            await user.save()
+            return response.send({ user })
+        } catch (error) {
+            return response.status(400).send({
+                message: "Não foi possível atualizar o usuário"
+            })
+        }
+
     }
 
 
-    async destroy ({ params, request, response }) {
+    async destroy ({ params: { id }, request, response }) {
+        const user = await User.findOrFail(id)
+
+        try {
+            await user.delete()
+            return response.status(204)
+        } catch (error) {
+            return response.status(500).send({
+                message: "Não foi possível atualizar o usuário"
+            })
+        }
     }
 
 
