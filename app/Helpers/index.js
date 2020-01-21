@@ -64,5 +64,6 @@ const moveMultipleFileUpload = async (fileJar, path = null) => {
 
 module.exports = {
 	strRandom,
-	moveSingleFileUpload
+	moveSingleFileUpload,
+	moveMultipleFileUpload
 }
