@@ -37,7 +37,7 @@ class CouponController {
          * 4 - pode ser utilizado por qualquer cliente em qualquer produto
          */
 
-        let can_use_for = {
+        let canUseFor = {
             cliente: false,
             product: false,
         }
@@ -61,7 +61,40 @@ class CouponController {
             const coupon = await CouponController.create(couponData, trx)
             const service = new Service(coupon, trx)
 
+            if (users && users.length > 0) {
+                await service.syncUsers(users)
+                canUseFor.client = true
+            }
+
+            if (products && products.length > 0) {
+                await service.syncProducts(products)
+                canUseFor.product = true
+            }
+
+            if (canUseFor.client && canUseFor.product) {
+                coupon.can_use_for = 'product_client'
+            } else if (canUseFor.product) {
+                coupon.can_use_for = 'product'
+            } else if (canUseFor.client) {
+                coupon.can_use_for = 'client'
+            } else {
+                coupon.can_use_for = 'all'
+            }
+
+            await coupon.save(trx)
+            await trx.commit()
+
+            return response.status(201).send({
+                coupon
+            })
+
         } catch (error) {
+
+            await trx.rollback()
+
+            return response.status(400).send({
+                message: "Não foi possível criar o cupom"
+            })
 
         }
     }
