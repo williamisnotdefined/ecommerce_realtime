@@ -23,7 +23,7 @@ class CouponController {
             couponsQuery.where('code', 'LIKE', `%${code}%`)
         }
 
-        const cupons = await Cupon.query().paginate(pagination.page, pagination.limit)
+        const cupons = await couponsQuery.paginate(pagination.page, pagination.limit)
 
         return response.send({ cupons })
     }
