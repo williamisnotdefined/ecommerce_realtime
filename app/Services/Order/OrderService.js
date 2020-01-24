@@ -28,7 +28,7 @@ class OrderService {
 		await this.model.items().whereNotIn('id', itemsId).delete(this.trx)
 
 		await Promise.all(currentItems.rows.map(async item => {
-			item.fill(items.find(n => n.id === item.id)) // nossa, que bosta..
+			item.fill(items.find(n => n.id === item.id)) // nossa, que bosta.. não da para entender essa merda direito
 			await item.save(this.trx)
 		}))
 
