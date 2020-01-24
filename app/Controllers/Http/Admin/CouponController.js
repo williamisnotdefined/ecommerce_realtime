@@ -106,7 +106,69 @@ class CouponController {
     }
 
 
-    async update ({ params, request, response }) {
+    async update ({ params: { id }, request, response }) {
+        // poderia desduplicar os códigos de create / update
+        const trx = await Database.beginTransaction()
+        const coupon = Coupn.findOrFail(id)
+
+        let canUseFor = {
+            cliente: false,
+            product: false,
+        }
+
+        const couponData = request.only([
+            'code',
+            'discount',
+            'valid_from',
+            'valid_until',
+            'quantity',
+            'type',
+            'recursive'
+        ])
+
+        const { users, products } = request.only(['users', 'products'])
+
+        try {
+
+            coupon.merge(couponData) // poderia ter um form como no django
+
+            const service = new Service(coupon, trx)
+
+            if (users && users.length > 0) {
+                await service.syncUsers(users)
+                canUseFor.client = true
+            }
+
+            if (products && products.length > 0) {
+                await service.syncProducts(products)
+                canUseFor.product = true
+            }
+
+            if (canUseFor.client && canUseFor.product) {
+                coupon.can_use_for = 'product_client'
+            } else if (canUseFor.product) {
+                coupon.can_use_for = 'product'
+            } else if (canUseFor.client) {
+                coupon.can_use_for = 'client'
+            } else {
+                coupon.can_use_for = 'all'
+            }
+
+            await coupon.save(trx)
+            await trx.commit()
+
+            return response.send({
+                coupon
+            })
+
+        } catch (error) {
+            await trx.rollback()
+
+            return response.status(400).send({
+                message: "Não foi possível atualizar o cupom"
+            })
+        }
+
     }
 
 
