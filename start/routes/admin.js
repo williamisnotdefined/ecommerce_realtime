@@ -4,8 +4,14 @@
 const Route = use('Route')
 
 Route.group(() => {
-
-	Route.resource('categories', 'CategoryController').apiOnly()
+	Route.resource('categories', 'CategoryController')
+		.apiOnly()
+		.validator(
+			new Map([
+				[['categories.store'], ['Admin/Category/Store']],
+				[['categories.update'], ['Admin/Category/Store']]
+			])
+		)
 
 	Route.resource('products', 'ProductController').apiOnly()
 
@@ -18,8 +24,7 @@ Route.group(() => {
 	Route.resource('images', 'ImageController').apiOnly()
 
 	Route.resource('user', 'UserController').apiOnly()
-
-
-}).prefix('v1/admin')
-.namespace('Admin')
-.middleware(['auth', 'is:(admin || manager)'])
+})
+	.prefix('v1/admin')
+	.namespace('Admin')
+	.middleware(['auth', 'is:(admin || manager)'])
