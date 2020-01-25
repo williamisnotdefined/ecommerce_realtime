@@ -11,6 +11,8 @@ Route.group(() => {
 
 	Route.resource('coupons', 'CouponController').apiOnly()
 
+	Route.post('orders/:id/discount', 'OrderController.applyDiscount')
+	Route.delete('orders/:id/discount', 'OrderController.removeDiscount')
 	Route.resource('order', 'OrderController').apiOnly()
 
 	Route.resource('images', 'ImageController').apiOnly()
@@ -20,3 +22,4 @@ Route.group(() => {
 
 }).prefix('v1/admin')
 .namespace('Admin')
+.middleware(['auth', 'is:(admin || manager)'])

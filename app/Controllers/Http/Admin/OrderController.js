@@ -5,7 +5,11 @@
 /** @typedef {import('@adonisjs/framework/src/View')} View */
 
 const Database = use('Database')
+
 const Order = use('App/Models/Order')
+const Discount = use('App/Models/Discount')
+const Coupon = use('App/Models/Coupon')
+
 const OrderService = use('App/Services/OrderService')
 
 /**
@@ -145,6 +149,56 @@ class OrderController {
 
     }
 
+
+    async applyDiscount({ params: { id }, request, response }) {
+        const { code } = request.only(['code'])
+        const coupon = await Coupon.findByOrFail('code', code.toUpperCase())
+        const order = await Order.findOrFail(id)
+
+        let info = {};
+
+        try {
+
+            const service = new OrderService()
+            const canAddDiscount = await service.canApplyDiscount(coupon)
+            const orderDiscounts = await order.coupons().getCount()
+
+            const canApplyToOrder = orderDiscounts == 0 || coupon.recursive
+
+            if (canAddDiscount && canApplyToOrder) {
+                await Discount.findOrCreate({
+                    order_id: order.id,
+                    coupon_id: cupom.id
+                    // não passamos o valor, pois está sendo adicionado pelo hook no beforeSave
+                })
+
+                info.message = "Cupom aplicado com sucesso!"
+                info.success = true
+
+            } else {
+                info.message = "Não foi possível aplicar cupom"
+                info.success = false
+            }
+
+            return response.send({ order, info })
+
+        } catch (error) {
+            return response.status(400).send({
+                message: "Erro ao aplicar cupom"
+            })
+        }
+
+    }
+
+
+    async removeDiscount({ request, response }) {
+        const { discount_id } = request.only(['discount_id']) // discount_id -> id do pedido
+        const discount = await Discount.findOrFail(discount_id)
+
+        await discount.delete()
+
+        response.status(204).send()
+    }
 
 }
 
