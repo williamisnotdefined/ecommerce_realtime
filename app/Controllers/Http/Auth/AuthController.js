@@ -5,9 +5,7 @@ const User = use('App/Models/User')
 const Role = use('Role')
 
 class AuthController {
-
 	async register({ request, response }) {
-
 		const trx = await Database.beginTransaction()
 
 		try {
@@ -18,7 +16,7 @@ class AuthController {
 			// const adminRole = await Role.findBy('slug', 'admin') // caso queira mais de uma role..
 
 			await user.roles().attach(
-				[userRole.id/*, adminRole*/],
+				[userRole.id /*, adminRole*/],
 				null, // callback
 				trx // transaction
 			)
@@ -28,17 +26,13 @@ class AuthController {
 			return response.status(201).send({
 				data: user
 			})
-
 		} catch (error) {
-
 			await trx.rollback()
 
 			return response.status(400).send({
 				message: 'Cannot create user'
 			})
-
 		}
-
 	}
 
 	async login({ request, response, auth }) {
@@ -47,11 +41,10 @@ class AuthController {
 		const data = await auth.withRefreshToken().attempt(email, password)
 
 		return response.send({ data })
-
 	}
 
 	async refresh({ request, response, auth }) {
-		let refreshToken = request.input('refresh_token'); // caso venha no body
+		let refreshToken = request.input('refresh_token') // caso venha no body
 
 		if (!refreshToken) {
 			// se não foi passado no body da requisição, tentamos pegar do header da request
@@ -59,16 +52,17 @@ class AuthController {
 		}
 
 		// tem que validar se realmente veio refresh_token de algum lugar
-		const user = await auth.newRefreshToken().generateForRefreshToken(refreshToken)
+		const user = await auth
+			.newRefreshToken()
+			.generateForRefreshToken(refreshToken)
 
 		return response.send({
 			data: user
 		})
-
 	}
 
 	async logout({ request, response, auth }) {
-		let refreshToken = request.input('refresh_token'); // caso venha no body
+		let refreshToken = request.input('refresh_token') // caso venha no body
 
 		if (!refreshToken) {
 			// se não foi passado no body da requisição, tentamos pegar do header da request
@@ -83,18 +77,11 @@ class AuthController {
 		return response.status(204).send()
 	}
 
-	async forgot({ request, response }) {
+	async forgot({ request, response }) {}
 
-	}
+	async remember({ request, response }) {}
 
-	async remember({ request, response }) {
-
-	}
-
-	async reset({ request, response }) {
-
-	}
-
+	async reset({ request, response }) {}
 }
 
 module.exports = AuthController

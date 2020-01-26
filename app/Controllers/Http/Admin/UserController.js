@@ -5,99 +5,96 @@
 /** @typedef {import('@adonisjs/framework/src/View')} View */
 
 const User = use('App/Models/User')
+const UserTransformer = use('App/Transformers/Admin/UserTransformer')
 
 /**
-* Resourceful controller for interacting with users
-*/
+ * Resourceful controller for interacting with users
+ */
 class UserController {
+	async index({ request, response, pagination, transform }) {
+		const search = request.input('search')
 
+		const userQuery = User.query()
 
-    async index ({ request, response, pagination }) {
+		if (search) {
+			userQuery
+				.where('name', 'LIKE', `%${search}%`)
+				.orWhere('email', 'LIKE', `%${search}%`)
+		}
 
-        const search = request.input('search')
+		try {
+			let users = await userQuery.paginate(
+				pagination.page,
+				pagination.limit
+			)
 
-        const userQuery = User.query()
+			users = await transform.paginate(users, UserTransformer)
 
-        if (search) {
-            userQuery.where('name', 'LIKE', `%${search}%`)
-            .orWhere('email', 'LIKE', `%${search}%`)
-        }
+			return response.send({
+				users
+			})
+		} catch (error) {
+			return response.status(400).send({
+				message: 'Não foi possível encontrar usuários'
+			})
+		}
+	}
 
-        try {
-            const users = await userQuery.paginate(pagination.page, pagination.limit)
-            return response.send({
-                users
-            })
-        } catch (error) {
-            return response.status(400).send({
-                message: "Não foi possível encontrar usuários"
-            })
-        }
+	async store({ request, response, transform }) {
+		const userData = request.only(['name', 'email', 'password', 'image_id'])
 
-    }
+		try {
+			let user = await User.create(userData)
+			user = await transform.item(user, UserTransformer)
 
+			return response.send({
+				user
+			})
+		} catch (error) {
+			return response.status(400).send({
+				message: 'Não foi possivel criar este usuário'
+			})
+		}
+	}
 
-    async store ({ request, response }) {
+	async show({ params: { id }, request, response, transform }) {
+		let user = await User.findOrFail(id)
+		user = await transform.item(user, UserTransformer)
 
-        const userData = request.only([ 'name', 'email', 'password', 'image_id' ])
+		return response.send(user)
+	}
 
-        try {
-            const user = await User.create(userData)
-            return response.send({
-                user
-            })
-        } catch (error) {
-            return response.status(400).send({
-                message: "Não foi possivel criar este usuário"
-            })
-        }
+	async update({ params: { id }, request, response, transform }) {
+		let user = await User.findOrFail(id)
+		// atualizar o email facil assim?
+		const userData = request.only(['name', 'email', 'password', 'image_id'])
 
-    }
+		user.merge(userData)
 
+		try {
+			await user.save()
+			user = await transform.item(user, UserTransformer)
 
-    async show ({ params: { id }, request, response, view }) {
+			return response.send({ user })
+		} catch (error) {
+			return response.status(400).send({
+				message: 'Não foi possível atualizar o usuário'
+			})
+		}
+	}
 
-        const user = await User.findOrFail(id)
+	async destroy({ params: { id }, request, response }) {
+		const user = await User.findOrFail(id)
 
-        return response.send(user)
-
-    }
-
-
-    async update ({ params: { id }, request, response }) {
-
-        const user = await User.findOrFail(id)
-        // atualizar o email facil assim?
-        const userData = request.only([ 'name', 'email', 'password', 'image_id' ])
-
-        user.merge(userData)
-
-        try {
-            await user.save()
-            return response.send({ user })
-        } catch (error) {
-            return response.status(400).send({
-                message: "Não foi possível atualizar o usuário"
-            })
-        }
-
-    }
-
-
-    async destroy ({ params: { id }, request, response }) {
-        const user = await User.findOrFail(id)
-
-        try {
-            await user.delete()
-            return response.status(204).send()
-        } catch (error) {
-            return response.status(500).send({
-                message: "Não foi possível atualizar o usuário"
-            })
-        }
-    }
-
-
+		try {
+			await user.delete()
+			return response.status(204).send()
+		} catch (error) {
+			return response.status(500).send({
+				message: 'Não foi possível atualizar o usuário'
+			})
+		}
+	}
 }
 
 module.exports = UserController
