@@ -1,6 +1,10 @@
 'use strict'
 
 const BumblebeeTransformer = use('Bumblebee/Transformer')
+const UserTransformer = use('App/Transformer/Admin/UserTransformer')
+const CouponTransformer = use('App/Transformer/Admin/CouponTransformer')
+const OrderItemTransformer = use('App/Transformer/Admin/OrderItemTransformer')
+const DiscountTransformer = use('App/Transformer/Admin/DiscountTransformer')
 
 /**
  * OrderTransformer class
@@ -11,6 +15,22 @@ const BumblebeeTransformer = use('Bumblebee/Transformer')
 class OrderTransformer extends BumblebeeTransformer {
 	static get availableInclude() {
 		return ['user', 'coupons', 'items', 'discounts']
+	}
+
+	includeUser(order) {
+		return this.item(order.getRelated('user'), UserTransformer)
+	}
+
+	includeItems(order) {
+		return this.item(order.getRelated('items'), OrderItemTransformer)
+	}
+
+	includeCoupons(order) {
+		return this.item(order.getRelated('coupons'), CouponTransformer)
+	}
+
+	includeDiscounts(order) {
+		return this.item(order.getRelated('discounts'), DiscountTransformer)
 	}
 
 	/**
