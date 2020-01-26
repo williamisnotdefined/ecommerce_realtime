@@ -5,27 +5,16 @@
 /** @typedef {import('@adonisjs/framework/src/View')} View */
 
 /**
-* Resourceful controller for interacting with orders
-*/
+ * Resourceful controller for interacting with orders
+ */
 class OrderController {
+	async index({ request, response, view }) {}
 
+	async store({ request, response }) {}
 
-    async index ({ request, response, view }) {
-    }
+	async show({ params, request, response, view }) {}
 
-
-    async store ({ request, response }) {
-    }
-
-
-    async show ({ params, request, response, view }) {
-    }
-
-
-    async edit ({ params, request, response, view }) {
-    }
-
-
+	async edit({ params, request, response, view }) {}
 }
 
 module.exports = OrderController
