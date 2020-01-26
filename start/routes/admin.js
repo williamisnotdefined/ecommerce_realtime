@@ -13,7 +13,9 @@ Route.group(() => {
 			])
 		)
 
-	Route.resource('products', 'ProductController').apiOnly()
+	Route.resource('products', 'ProductController')
+		.apiOnly()
+		.validator(new Map([[['orders.store'], ['Admin/Order/Store']]]))
 
 	Route.resource('coupons', 'CouponController').apiOnly()
 
