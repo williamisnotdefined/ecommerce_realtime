@@ -1,5 +1,5 @@
 'use strict'
-
+// https://www.npmjs.com/package/adonis-bumblebee
 const BumblebeeTransformer = use('Bumblebee/Transformer')
 const ImageTransformer = use('App/Transformers/Admin/ImageTransformer')
 
@@ -15,6 +15,21 @@ class CategoryTransformer extends BumblebeeTransformer {
 	}
 
 	/**
+    necessita criação do metodo includeAuthor e
+    no controller precisa ser colocado -> transform.include('author')
+    static get availableInclude () {
+        return [
+            'author'
+        ]
+    }
+
+    includeAuthor(model) {
+        return this.item(model.getRelated('author'), AuthorTransformer)
+        return this.paginate(model.getRelated('author'), AuthorTransformer)??
+    }
+    */
+
+	/**
 	 * This method is used to transform the data.
 	 */
 	transform(category) {
@@ -22,7 +37,6 @@ class CategoryTransformer extends BumblebeeTransformer {
 			id: category.id,
 			title: category.title,
 			description: category.description
-			// image_url: model.image.url
 		}
 	}
 
