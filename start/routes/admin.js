@@ -25,7 +25,14 @@ Route.group(() => {
 
 	Route.resource('images', 'ImageController').apiOnly()
 
-	Route.resource('user', 'UserController').apiOnly()
+	Route.resource('user', 'UserController')
+		.apiOnly()
+		.validator(
+			new Map([
+				[['users.store'], ['Admin/User/Store']],
+				[['users.update'], ['Admin/User/Store']]
+			])
+		)
 })
 	.prefix('v1/admin')
 	.namespace('Admin')
