@@ -36,7 +36,7 @@ class CategoryController {
 		})
 	}
 
-	async store({ request, response }) {
+	async store({ request, response, transform }) {
 		const { title, description, image_id } = request.only([
 			'title',
 			'description',
@@ -44,11 +44,16 @@ class CategoryController {
 		])
 
 		try {
-			const category = await Category.create({
+			const categoryRaw = await Category.create({
 				title,
 				description,
 				image_id
 			})
+
+			const category = await transform.item(
+				categoryRaw,
+				CategoryTransformer
+			)
 
 			return response.status(201).send({
 				data: category
@@ -60,15 +65,16 @@ class CategoryController {
 		}
 	}
 
-	async show({ params: { id }, response }) {
+	async show({ params: { id }, response, transform }) {
 		// findOrFail -> retorna 404 para o user
 		// necessário criar try catch
-		const category = await Category.findOrFail(id)
+		const categoryRaw = await Category.findOrFail(id)
+		const category = await transform.item(categoryRaw, CategoryTransformer)
 		return response.send({ data: category })
 	}
 
-	async update({ params: { id }, request, response }) {
-		const category = await Category.findOrFail(id)
+	async update({ params: { id }, request, response, transform }) {
+		let category = await Category.findOrFail(id)
 		const { title, description, image_id } = request.only([
 			'title',
 			'description',
@@ -77,6 +83,8 @@ class CategoryController {
 
 		category.merge({ title, description, image_id })
 		await category.save()
+
+		category = await transform.item(category, CategoryTransformer)
 
 		response.send({ category })
 	}

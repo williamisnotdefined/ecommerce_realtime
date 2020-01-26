@@ -18,6 +18,7 @@ class ImageTransformer extends BumblebeeTransformer {
 			id: image.id,
 			size: image.size,
 			url: image.url,
+			original_name: image.original_name,
 			extension: image.extension
 		}
 	}

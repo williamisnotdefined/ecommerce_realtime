@@ -7,6 +7,7 @@
 const fs = use('fs')
 
 const Image = use('App/Models/Image')
+const ImageTransformer = user('App/Transformers/Admin/ImageTransformer')
 
 const { moveSingleFileUpload, moveMultipleFileUpload } = use('App/Helpers')
 
@@ -14,17 +15,19 @@ const { moveSingleFileUpload, moveMultipleFileUpload } = use('App/Helpers')
  * Resourceful controller for interacting with images
  */
 class ImageController {
-	async index({ response, pagination }) {
-		const images = await Image.query()
+	async index({ response, pagination, transform }) {
+		let images = await Image.query()
 			.orderBy('id', 'DESC')
 			.paginate(pagination.page, pagination.limit)
+
+		images = await transform.paginate(images, ImageTransformer)
 
 		return response.send({
 			images
 		})
 	}
 
-	async store({ request, response }) {
+	async store({ request, response, transform }) {
 		// todo: melhorar isso aqui, tá muito ruim (arrumar os helpers tb)
 		try {
 			const imagesUploaded = request.file('images', {
@@ -44,8 +47,13 @@ class ImageController {
 						extension: file.subtype
 					})
 
+					const transformedImage = await transform.item(
+						image,
+						ImageTransformer
+					)
+
 					return response.status(201).send({
-						uploaded: [image],
+						uploaded: [transformedImage],
 						errors: null
 					})
 				}
@@ -66,7 +74,12 @@ class ImageController {
 							extension: file.subtype
 						})
 
-						all_images.push(image)
+						const transformedImage = await transform.item(
+							image,
+							ImageTransformer
+						)
+
+						all_images.push(transformedImage)
 					})
 				)
 
@@ -82,15 +95,16 @@ class ImageController {
 		}
 	}
 
-	async show({ params: { id }, request, response }) {
-		const image = await Image.findOrFail(id)
+	async show({ params: { id }, request, response, transform }) {
+		let image = await Image.findOrFail(id)
+		image = await transform.item(image, ImageTransformer)
 		return response.send({
 			image
 		})
 	}
 
-	async update({ params: { id }, request, response }) {
-		const image = await Image.findOrFail(id)
+	async update({ params: { id }, request, response, transform }) {
+		let image = await Image.findOrFail(id)
 
 		try {
 			image.merge({
@@ -98,6 +112,8 @@ class ImageController {
 			})
 
 			await image.save()
+
+			image = await transform.item(image, ImageTransformer)
 
 			return response.send({ image })
 		} catch (error) {
