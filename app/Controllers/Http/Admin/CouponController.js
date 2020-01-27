@@ -6,195 +6,190 @@
 
 const Database = use('Database')
 const Cupon = use('App/Models/Cupon')
+
 const Service = use('App/Service/CouponService')
 
+const CouponTransformer = use('App/Transformer/Admin/CouponTransformer')
+
 /**
-* Resourceful controller for interacting with coupons
-*/
+ * Resourceful controller for interacting with coupons
+ */
 class CouponController {
+	async index({ request, response, pagination, transform }) {
+		const { code } = request.only(['code'])
+		const couponsQuery = Cupon.query()
 
+		if (code) {
+			couponsQuery.where('code', 'LIKE', `%${code}%`)
+		}
 
-    async index ({ request, response, pagination }) {
+		let cupons = await couponsQuery.paginate(
+			pagination.page,
+			pagination.limit
+		)
 
-        const { code } = request.only(['code'])
-        const couponsQuery = Cupon.query()
+		cupons = await transform.paginate(cupons, CouponTransformer)
 
-        if (code) {
-            couponsQuery.where('code', 'LIKE', `%${code}%`)
-        }
+		return response.send({ cupons })
+	}
 
-        const cupons = await couponsQuery.paginate(pagination.page, pagination.limit)
+	async store({ request, response, transform }) {
+		/**
+		 * 1 - pode ser utilizado em produtos especificos
+		 * 2 - pode ser utilizado em clientes especificos
+		 * 3 - pode ser utilizado em produtos e clientes especificos
+		 * 4 - pode ser utilizado por qualquer cliente em qualquer produto
+		 */
 
-        return response.send({ cupons })
-    }
+		let canUseFor = {
+			cliente: false,
+			product: false
+		}
 
+		const couponData = request.only([
+			'code',
+			'discount',
+			'valid_from',
+			'valid_until',
+			'quantity',
+			'type',
+			'recursive'
+		])
 
-    async store ({ request, response }) {
-        /**
-         * 1 - pode ser utilizado em produtos especificos
-         * 2 - pode ser utilizado em clientes especificos
-         * 3 - pode ser utilizado em produtos e clientes especificos
-         * 4 - pode ser utilizado por qualquer cliente em qualquer produto
-         */
+		const { users, products } = request.only(['users', 'products'])
 
-        let canUseFor = {
-            cliente: false,
-            product: false,
-        }
+		try {
+			const trx = await Database.beginTransaction()
 
-        const couponData = request.only([
-            'code',
-            'discount',
-            'valid_from',
-            'valid_until',
-            'quantity',
-            'type',
-            'recursive'
-        ])
+			let coupon = await CouponController.create(couponData, trx)
+			const service = new Service(coupon, trx)
 
-        const { users, products } = request.only(['users', 'products'])
+			if (users && users.length > 0) {
+				await service.syncUsers(users)
+				canUseFor.client = true
+			}
 
-        try {
+			if (products && products.length > 0) {
+				await service.syncProducts(products)
+				canUseFor.product = true
+			}
 
-            const trx = await Database.beginTransaction()
+			if (canUseFor.client && canUseFor.product) {
+				coupon.can_use_for = 'product_client'
+			} else if (canUseFor.product) {
+				coupon.can_use_for = 'product'
+			} else if (canUseFor.client) {
+				coupon.can_use_for = 'client'
+			} else {
+				coupon.can_use_for = 'all'
+			}
 
-            const coupon = await CouponController.create(couponData, trx)
-            const service = new Service(coupon, trx)
+			await coupon.save(trx)
+			await trx.commit()
 
-            if (users && users.length > 0) {
-                await service.syncUsers(users)
-                canUseFor.client = true
-            }
+			coupon = await transform.item(coupon, CouponTransformer)
 
-            if (products && products.length > 0) {
-                await service.syncProducts(products)
-                canUseFor.product = true
-            }
+			return response.status(201).send({
+				coupon
+			})
+		} catch (error) {
+			await trx.rollback()
 
-            if (canUseFor.client && canUseFor.product) {
-                coupon.can_use_for = 'product_client'
-            } else if (canUseFor.product) {
-                coupon.can_use_for = 'product'
-            } else if (canUseFor.client) {
-                coupon.can_use_for = 'client'
-            } else {
-                coupon.can_use_for = 'all'
-            }
+			return response.status(400).send({
+				message: 'Não foi possível criar o cupom'
+			})
+		}
+	}
 
-            await coupon.save(trx)
-            await trx.commit()
+	async show({ params: { id }, request, response, transform }) {
+		let coupon = await Cupon.findOrFail(id)
+		coupon = await transform.item(coupon, CouponTransformer)
+		return response.send({ coupon })
+	}
 
-            return response.status(201).send({
-                coupon
-            })
+	async update({ params: { id }, request, response, transform }) {
+		// poderia desduplicar os códigos de create / update
+		const trx = await Database.beginTransaction()
+		let coupon = Coupn.findOrFail(id)
 
-        } catch (error) {
+		let canUseFor = {
+			cliente: false,
+			product: false
+		}
 
-            await trx.rollback()
+		const couponData = request.only([
+			'code',
+			'discount',
+			'valid_from',
+			'valid_until',
+			'quantity',
+			'type',
+			'recursive'
+		])
 
-            return response.status(400).send({
-                message: "Não foi possível criar o cupom"
-            })
+		const { users, products } = request.only(['users', 'products'])
 
-        }
-    }
+		try {
+			coupon.merge(couponData) // poderia ter um form como no django
 
+			const service = new Service(coupon, trx)
 
-    async show ({ params: { id }, request, response, view }) {
-        const coupon = await Cupon.findOrFail(id)
-        return response.send({ coupon })
-    }
+			if (users && users.length > 0) {
+				await service.syncUsers(users)
+				canUseFor.client = true
+			}
 
+			if (products && products.length > 0) {
+				await service.syncProducts(products)
+				canUseFor.product = true
+			}
 
-    async update ({ params: { id }, request, response }) {
-        // poderia desduplicar os códigos de create / update
-        const trx = await Database.beginTransaction()
-        const coupon = Coupn.findOrFail(id)
+			if (canUseFor.client && canUseFor.product) {
+				coupon.can_use_for = 'product_client'
+			} else if (canUseFor.product) {
+				coupon.can_use_for = 'product'
+			} else if (canUseFor.client) {
+				coupon.can_use_for = 'client'
+			} else {
+				coupon.can_use_for = 'all'
+			}
 
-        let canUseFor = {
-            cliente: false,
-            product: false,
-        }
+			await coupon.save(trx)
+			await trx.commit()
 
-        const couponData = request.only([
-            'code',
-            'discount',
-            'valid_from',
-            'valid_until',
-            'quantity',
-            'type',
-            'recursive'
-        ])
+			coupon = await transform.item(coupon, CouponTransformer)
 
-        const { users, products } = request.only(['users', 'products'])
+			return response.send({
+				coupon
+			})
+		} catch (error) {
+			await trx.rollback()
 
-        try {
+			return response.status(400).send({
+				message: 'Não foi possível atualizar o cupom'
+			})
+		}
+	}
 
-            coupon.merge(couponData) // poderia ter um form como no django
+	async destroy({ params: { id }, request, response }) {
+		const trx = await Database.beginTransaction()
+		const coupon = Coupn.findOrFail(id)
 
-            const service = new Service(coupon, trx)
+		try {
+			await coupon.products().detach([], trx)
+			await coupon.orders().detach([], trx)
+			await coupon.users().detach([], trx)
+			await coupon.delete(trx)
+			await trx.commit()
 
-            if (users && users.length > 0) {
-                await service.syncUsers(users)
-                canUseFor.client = true
-            }
-
-            if (products && products.length > 0) {
-                await service.syncProducts(products)
-                canUseFor.product = true
-            }
-
-            if (canUseFor.client && canUseFor.product) {
-                coupon.can_use_for = 'product_client'
-            } else if (canUseFor.product) {
-                coupon.can_use_for = 'product'
-            } else if (canUseFor.client) {
-                coupon.can_use_for = 'client'
-            } else {
-                coupon.can_use_for = 'all'
-            }
-
-            await coupon.save(trx)
-            await trx.commit()
-
-            return response.send({
-                coupon
-            })
-
-        } catch (error) {
-            await trx.rollback()
-
-            return response.status(400).send({
-                message: "Não foi possível atualizar o cupom"
-            })
-        }
-
-    }
-
-
-    async destroy ({ params: { id }, request, response }) {
-
-        const trx = await Database.beginTransaction()
-        const coupon = Coupn.findOrFail(id)
-
-        try {
-            await coupon.products().detach([], trx)
-            await coupon.orders().detach([], trx)
-            await coupon.users().detach([], trx)
-            await coupon.delete(trx)
-            await trx.commit()
-
-            return response.status(204).send()
-        } catch (error) {
-            await trx.rollback()
-            return response.status(400).send({
-                message: "Não foi possivel excluir o cupom"
-            })
-        }
-
-    }
-
-
+			return response.status(204).send()
+		} catch (error) {
+			await trx.rollback()
+			return response.status(400).send({
+				message: 'Não foi possivel excluir o cupom'
+			})
+		}
+	}
 }
 
 module.exports = CouponController
