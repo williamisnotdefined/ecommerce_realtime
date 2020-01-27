@@ -4,7 +4,6 @@
 const Model = use('Model')
 
 class OrderItem extends Model {
-
 	static boot() {
 		super.boot()
 
@@ -19,13 +18,9 @@ class OrderItem extends Model {
 		return this.belongsTo('App/Models/Order')
 	}
 
-
 	static get traits() {
-		return [
-			'App/Models/Traits/NoTimestamp'
-		]
+		return ['App/Models/Traits/NoTimestamp']
 	}
-
 }
 
 module.exports = OrderItem

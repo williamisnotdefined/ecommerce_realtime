@@ -108,6 +108,7 @@ class OrderController {
 			await order.save(trx)
 			await trx.commit()
 
+			order = Order.find(order.id) // gambiarra do professor por causa do hook
 			order = await transform.item(order, OrderTransformer)
 
 			return response.send(order)
