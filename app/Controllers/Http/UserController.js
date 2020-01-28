@@ -9,9 +9,7 @@ class UserController {
 		const userData = await transform.item(user, UserTransformer)
 		userData.roles = await user.getRoles()
 
-		return response.status(200).send({
-			user: userData
-		})
+		return response.status(200).send(userData)
 	}
 }
 

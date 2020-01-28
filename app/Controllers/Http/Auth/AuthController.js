@@ -1,8 +1,10 @@
 'use strict'
 
+const Ws = use('Ws')
 const Database = use('Database')
-const User = use('App/Models/User')
 const Role = use('Role')
+
+const User = use('App/Models/User')
 
 class AuthController {
 	async register({ request, response }) {
@@ -22,6 +24,12 @@ class AuthController {
 			)
 
 			await trx.commit()
+
+			const topic = Ws.getChannel('notifications').topic('notifications')
+
+			if (topic) {
+				topic.broadcast('new:user')
+			}
 
 			return response.status(201).send({
 				data: user
