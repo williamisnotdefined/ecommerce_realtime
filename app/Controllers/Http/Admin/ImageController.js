@@ -6,6 +6,7 @@
 
 const fs = use('fs')
 
+const Helpers = use('Helpers')
 const Image = use('App/Models/Image')
 const ImageTransformer = user('App/Transformers/Admin/ImageTransformer')
 

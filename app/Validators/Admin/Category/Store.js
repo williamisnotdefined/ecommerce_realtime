@@ -4,7 +4,7 @@ class Store {
 	get rules() {
 		return {
 			title: 'required',
-			desccription: 'required'
+			description: 'required'
 		}
 	}
 }
