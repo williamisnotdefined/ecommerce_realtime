@@ -28,7 +28,9 @@ class CouponController {
 			pagination.limit
 		)
 
-		cupons = await transform.paginate(cupons, CouponTransformer)
+		cupons = await transform
+			.include('users,products,orders')
+			.paginate(cupons, CouponTransformer)
 
 		return response.send({ cupons })
 	}
@@ -87,7 +89,9 @@ class CouponController {
 			await coupon.save(trx)
 			await trx.commit()
 
-			coupon = await transform.item(coupon, CouponTransformer)
+			coupon = await transform
+				.include('users,products')
+				.item(coupon, CouponTransformer)
 
 			return response.status(201).send({
 				coupon

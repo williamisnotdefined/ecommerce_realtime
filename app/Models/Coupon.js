@@ -4,7 +4,6 @@
 const Model = use('Model')
 
 class Coupon extends Model {
-
 	static get dates() {
 		return ['created_at', 'updated_at', 'valid_from', 'valid_until']
 	}
@@ -20,7 +19,6 @@ class Coupon extends Model {
 	orders() {
 		return this.belongsToMany('App/Models/Order')
 	}
-
 }
 
 module.exports = Coupon
