@@ -37,7 +37,9 @@ class OrderController {
 				pagination.limit
 			)
 
-			orders = await transform.paginate(orders, OrderTransformer)
+			orders = await transform
+				.include('items,user,discounts')
+				.paginate(orders, OrderTransformer)
 
 			return response.send({ orders })
 		} catch (error) {
@@ -110,7 +112,7 @@ class OrderController {
 
 			order = Order.find(order.id) // gambiarra do professor por causa do hook
 			order = await transform
-				.include('user,items')
+				.include('user,items,discounts,coupons')
 				.item(order, OrderTransformer)
 
 			return response.send(order)
